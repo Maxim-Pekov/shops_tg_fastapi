@@ -1,0 +1,25 @@
+[project]
+name = "app"
+version = "0.1.0"
+description = ""
+authors = [
+    {name = "Your Name",email = "you@example.com"}
+]
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "fastapi (>=0.115.7,<0.116.0)",
+    "uvicorn[standart] (>=0.34.0,<0.35.0)",
+    "black (>=24.10.0,<25.0.0)",
+    "alembic (>=1.14.1,<2.0.0)",
+    "python-slugify (>=8.0.4,<9.0.0)",
+    "celery (>=5.4.0,<6.0.0)",
+    "passlib (>=1.7.4,<2.0.0)",
+    "bcrypt (==4.0.1)",
+    "sqlalchemy (>=2.0.39,<3.0.0)"
+]
+
+
+[build-system]
+requires = ["poetry-core>=2.0.0,<3.0.0"]
+build-backend = "poetry.core.masonry.api"
