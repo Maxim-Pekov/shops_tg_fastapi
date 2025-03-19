@@ -8,10 +8,10 @@ class CreateProduct(BaseModel):
     name: str
     description: str
     image_url: str
-    category: int
+    category: int | str
     store_name: str
-    store: int
     is_active: bool
+    price: float
     created_at: Optional[datetime] = None
 
 
@@ -34,4 +34,4 @@ class CreateStore(BaseModel):
     name: str
     address: str
     is_active: bool
-    slug: str
+    slug: Optional[str] = None

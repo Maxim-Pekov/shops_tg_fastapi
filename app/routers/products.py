@@ -13,27 +13,19 @@ router = APIRouter(prefix='/products', tags=['products'])
 
 
 @router.get('/')
-async def all_products(db: Annotated[AsyncSession, Depends(get_db)]):
-    products = await db.scalars(select(Product).where(Product.is_active == True, Product.stock > 0))
-    if products is None:
+def all_products(db: Annotated[AsyncSession, Depends(get_db)]):
+    products = Product.get_all_products(db)
+    if not products:
         return HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail='There are no product'
         )
-    return products.all()
+    return products
 
 
 @router.post('/create')
-async def create_product(db: Annotated[AsyncSession, Depends(get_db)], create_product: CreateProduct):
-    await db.execute(insert(Product).values(name=create_product.name,
-                                      description=create_product.description,
-                                      price=create_product.price,
-                                      image_url=create_product.image_url,
-                                      stock=create_product.stock,
-                                      category_id=create_product.category,
-                                      rating=0.0,
-                                      slug=slugify(create_product.name)))
-    await db.commit()
+def create_product(db: Annotated[AsyncSession, Depends(get_db)], create_product: CreateProduct):
+    Product.create_product(db, create_product)
     return {
         'status_code': status.HTTP_201_CREATED,
         'transaction': 'Successful'

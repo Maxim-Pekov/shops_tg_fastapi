@@ -17,12 +17,12 @@ router = APIRouter(prefix='/store', tags=['store'])
 
 
 @router.get('/all_stories')
-def get_all_stories(db: Session = Depends(get_db)):
+def get_all_stores(db: Session = Depends(get_db)):
     return Store.get_all_stories(db)
 
 
 @router.post('/create')
-def create_category(create_store: CreateStore, db: Session = Depends(get_db)):
+def create_store(create_store: CreateStore, db: Session = Depends(get_db)):
     Store.create_store(db, create_store)
     return {
         'status_code': status.HTTP_201_CREATED,

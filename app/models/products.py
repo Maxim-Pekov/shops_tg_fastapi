@@ -1,4 +1,5 @@
 import datetime
+from http.client import HTTPException
 
 from app.backend.db import Base
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, Float, DateTime
@@ -14,7 +15,7 @@ class Product(Base):
     __tablename__ = 'products'
 
     id = Column(Integer, primary_key=True, index=True)
-    name = Column(String)
+    name = Column(String, nullable=False, unique=True)
     slug = Column(String, unique=True, index=True)
     description = Column(String)
     image_url = Column(String)
@@ -33,20 +34,19 @@ class Product(Base):
 
     @staticmethod
     def create_product(db: Session, create_product: CreateProduct):
-        store = db.query(Store).filter_by(name=create_product.store_name)
+        store = db.query(Store).filter_by(name=create_product.store_name).one()
         product = Product(name=create_product.name,
                           description=create_product.description,
-                          price=create_product.price,
                           image_url=create_product.image_url,
-                          stock=create_product.stock,
                           category_id=create_product.category,
-                          store_id=create_product.store,
                           rating=0.0,
                           slug=slugify(create_product.name))
         product_store = ProductStore(product_id=product.id,
                                      store_id=store.id,
                                      price=create_product.price)
         db.add(product)
+        db.commit()
+        db.add(product_store)
         db.commit()
         return {
             'status_code': status.HTTP_201_CREATED,
