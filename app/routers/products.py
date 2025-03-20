@@ -24,8 +24,8 @@ def all_products(db: Annotated[AsyncSession, Depends(get_db)]):
 
 
 @router.post('/create')
-def create_product(db: Annotated[AsyncSession, Depends(get_db)], create_product: CreateProduct):
-    Product.create_product(db, create_product)
+def create_or_update_product(db: Annotated[AsyncSession, Depends(get_db)], create_product: CreateProduct):
+    Product.create_or_update_product(db, create_product)
     return {
         'status_code': status.HTTP_201_CREATED,
         'transaction': 'Successful'
@@ -34,18 +34,7 @@ def create_product(db: Annotated[AsyncSession, Depends(get_db)], create_product:
 
 @router.get('/{category_slug}')
 async def product_by_category(db: Annotated[AsyncSession, Depends(get_db)], category_slug: str):
-    category = await db.scalar(select(Category).where(Category.slug == category_slug))
-    if category is None:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail='Category not found'
-        )
-    subcategories = await db.scalars(select(Category).where(Category.parent_id == category.id))
-    categories_and_subcategories = [category.id] + [i.id for i in subcategories.all()]
-    products_category = await db.scalars(
-        select(Product).where(Product.category_id.in_(categories_and_subcategories), Product.is_active == True,
-                              Product.stock > 0))
-    return products_category.all()
+    return Product.get_products_by_category(db, category_slug)
 
 
 @router.get('/detail/{product_slug}')
