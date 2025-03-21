@@ -11,7 +11,6 @@ from app.models import *
 router = APIRouter(prefix='/products', tags=['products'])
 
 
-
 @router.get('/')
 def all_products(db: Annotated[AsyncSession, Depends(get_db)]):
     products = Product.get_all_products(db)
