@@ -36,6 +36,11 @@ async def product_by_category(db: Annotated[AsyncSession, Depends(get_db)], cate
     return Product.get_products_by_category(db, category_slug)
 
 
+@router.get('/search_by_name/{name}')
+async def products_by_partial_name(db: Annotated[AsyncSession, Depends(get_db)], name: str):
+    return Product.get_all_product_by_name(name)
+
+
 @router.get('/detail/{product_slug}')
 async def product_detail(db: Annotated[AsyncSession, Depends(get_db)], product_slug: str):
     product = await db.scalar(

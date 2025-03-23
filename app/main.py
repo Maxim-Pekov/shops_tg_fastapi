@@ -6,6 +6,7 @@ from fastapi import FastAPI
 
 from app.backend.db import Base, engine
 # from app.models import store
+from app.models import Product
 from celery_app import celery
 from routers import category, products, auth, store
 from app.daemons.five.products_parser import product_parser, categories_parser
@@ -22,8 +23,9 @@ def call_background_task():
 @fastapi_app.get("/")
 async def welcome() -> dict:
     # call_background_task.delay()
-    product_parser("fff")
+    # product_parser("fff")
     # categories_parser()
+    Product.get_all_product_by_name("mолоко")
     return {"message": "My e-commerce app"}
 
 

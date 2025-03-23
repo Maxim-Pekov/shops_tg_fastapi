@@ -2,7 +2,7 @@ import datetime
 from http.client import HTTPException
 
 from slugify import slugify
-from app.backend.db import Base
+from app.backend.db import Base, SessionLocal
 from sqlalchemy import Column, ForeignKey, Integer, String, Boolean, Float, DateTime
 from sqlalchemy.orm import relationship, Session
 
@@ -91,9 +91,7 @@ class Product(Base):
             db.add(product)
             db.commit()
         product_store = (
-            db.query(ProductStore)
-                .filter_by(product_id=product.id, store_id=store.id)
-                .first()
+            db.query(ProductStore).filter_by(product_id=product.id, store_id=store.id).first()
         )
 
         if product_store:
@@ -109,3 +107,18 @@ class Product(Base):
         db.refresh(product)
 
         return product
+
+    @staticmethod
+    def get_all_product_by_name(product: str):
+        """
+        Метод получает все продукты из БД у которых есть частичное совпадение с переданным словом.
+        """
+        if not product:
+            return []
+        import re
+        db = SessionLocal()
+        escaped_word = slugify(product)
+        re.sub(r'[^a-zA-Z0-9 ]', '', product)
+        pattern = f'%{escaped_word}%'
+        products = db.query(Product).filter(Product.slug.ilike(pattern)).all()
+        return products
