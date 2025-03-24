@@ -1,6 +1,7 @@
 import asyncio
 
 import requests
+import redis
 
 # from backend import db
 from app.celery_app import celery
@@ -14,11 +15,22 @@ from app.schemas import CreateProduct, CreateCategory
 from app.backend.db import SessionLocal
 
 
-# from celery import shared_task
+redis_client = redis.Redis(
+    host='localhost',
+    port=6379,
+    decode_responses=True
+)
 
+
+NOT_PARSE_CATEGORIES = ['Готовая еда', 'Наша пекарня', 'Не забудьте купить', 'Л\'Этуаль в Пятёрочке', 'Пушистый клуб',
+                        'Только в онлайне', 'Качество и выгода от Пятёрочки', '']
+
+# from celery import shared_task
+_categories = {}
 
 @celery.task
 def product_parser(text):
+    categories = redis_client.hgetall('five_categories')
     headers = {
         'accept': 'application/json, text/plain, */*',
         'accept-language': 'ru-RU,ru;q=0.9,en-US;q=0.8,en;q=0.7',
@@ -41,34 +53,36 @@ def product_parser(text):
         'include_restrict': 'false',
         'preview_products_count': '6',
     }
-
-    response = requests.get(
-        'https://5d.5ka.ru/api/catalog/v1/stores/36JP/categories/73C2336/preview',
-        params=params,
-        headers=headers,
-    )
-    products_json = response.json()
-    parent_category_name = products_json.get('name')
-    subcategories = products_json.get('subcategories', {})
-    db = SessionLocal()
-    for subcategory in subcategories:
-        category = CreateCategory(
-            name=subcategory.get("name"),
-            parent_id=Category.get_category_by_name(db, parent_category_name).id,
+    for category__ in categories:
+        if category__ in NOT_PARSE_CATEGORIES:
+            continue
+        response = requests.get(
+            f'https://5d.5ka.ru/api/catalog/v1/stores/36JP/categories/{categories.get(category__)}/preview',
+            params=params,
+            headers=headers,
         )
-        category = Category.get_or_create_category_by_name(db, category)
-        products = subcategory.get("products", [])
-        for _product in products:
-            product = CreateProduct(
-                name=_product['name'],
-                price=_product['prices']['regular'],
-                category=category.id,
-                is_active=True,
-                store_name='five',
-                image_url='',
-                description=''
+        products_json = response.json()
+        parent_category_name = products_json.get('name')
+        subcategories = products_json.get('subcategories', {})
+        db = SessionLocal()
+        for subcategory in subcategories:
+            category = CreateCategory(
+                name=subcategory.get("name"),
+                parent_id=Category.get_category_by_name(db, parent_category_name).id,
             )
-            Product.create_or_update_product(db, product)
+            category = Category.get_or_create_category_by_name(db, category)
+            products = subcategory.get("products", [])
+            for _product in products:
+                product = CreateProduct(
+                    name=_product['name'],
+                    price=_product['prices']['regular'],
+                    category=category.id,
+                    is_active=True,
+                    store_name='five',
+                    image_url='',
+                    description=''
+                )
+                Product.create_or_update_product(db, product)
 
 
 @celery.task
@@ -103,17 +117,18 @@ def categories_parser():
     db = SessionLocal()
     categories_json = response.json()
     for category in categories_json:
-        category = CreateCategory(
+        category_ = CreateCategory(
             name=category.get("name"),
             parent_id=None,
         )
-        Category.create_categories(db, category)
+        redis_client.hset("five_categories", mapping={category.get("name"): category.get("id")})
+        Category.get_or_create_category_by_name(db, category_)
 
 
 celery.conf.beat_schedule = {
     'run-me-background-task': {
         'task': 'daemons.five.products_parser.product_parser',
-        'schedule': 30.0,                              # запуск задачи каждые 60 секунд
+        'schedule': 60.0,                              # запуск задачи каждые 60 секунд
         'args': ('Test text message',)
     }
 }

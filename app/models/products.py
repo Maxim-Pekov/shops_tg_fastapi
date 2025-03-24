@@ -118,7 +118,7 @@ class Product(Base):
         import re
         db = SessionLocal()
         escaped_word = slugify(product)
-        re.sub(r'[^a-zA-Z0-9 ]', '', product)
+        escaped_word = re.sub(r'[^a-zA-Z0-9 ]', '', escaped_word)
         pattern = f'%{escaped_word}%'
         products = db.query(Product).filter(Product.slug.ilike(pattern)).all()
         return products

@@ -32,12 +32,12 @@ def create_or_update_product(db: Annotated[AsyncSession, Depends(get_db)], creat
 
 
 @router.get('/{category_slug}')
-async def product_by_category(db: Annotated[AsyncSession, Depends(get_db)], category_slug: str):
+def product_by_category(db: Annotated[AsyncSession, Depends(get_db)], category_slug: str):
     return Product.get_products_by_category(db, category_slug)
 
 
 @router.get('/search_by_name/{name}')
-async def products_by_partial_name(db: Annotated[AsyncSession, Depends(get_db)], name: str):
+def products_by_partial_name(db: Annotated[AsyncSession, Depends(get_db)], name: str):
     return Product.get_all_product_by_name(name)
 
 

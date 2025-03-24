@@ -23,9 +23,9 @@ def call_background_task():
 @fastapi_app.get("/")
 async def welcome() -> dict:
     # call_background_task.delay()
-    # product_parser("fff")
+    product_parser("fff")
     # categories_parser()
-    Product.get_all_product_by_name("mолоко")
+    # Product.get_all_product_by_name("mолоко")
     return {"message": "My e-commerce app"}
 
 
