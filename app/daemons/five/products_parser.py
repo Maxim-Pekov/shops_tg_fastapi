@@ -1,4 +1,6 @@
 import asyncio
+import logging
+import time
 
 import requests
 import redis
@@ -28,6 +30,7 @@ NOT_PARSE_CATEGORIES = ['Готовая еда', 'Наша пекарня', 'Н�
 # from celery import shared_task
 _categories = {}
 
+
 @celery.task
 def product_parser(text):
     categories = redis_client.hgetall('five_categories')
@@ -53,26 +56,38 @@ def product_parser(text):
         'include_restrict': 'false',
         'preview_products_count': '6',
     }
+    db = SessionLocal()
     for category__ in categories:
         if category__ in NOT_PARSE_CATEGORIES:
             continue
-        response = requests.get(
-            f'https://5d.5ka.ru/api/catalog/v1/stores/36JP/categories/{categories.get(category__)}/preview',
-            params=params,
-            headers=headers,
-        )
+        time.sleep(0.5)
+        url = f'https://5d.5ka.ru/api/catalog/v1/stores/36JP/categories/{categories.get(category__)}/preview'
+        try:
+            response = requests.get(
+                url,
+                params=params,
+                headers=headers,
+                timeout=10
+            )
+            response.raise_for_status()
+        except requests.exceptions.Timeout:
+            logging.error(f'Время ожидания ответа истекло для {url}')
+        except requests.exceptions.HTTPError as http_err:
+            logging.error(f"HTTP ошибка: {http_err}")
+        except Exception as err:
+            logging.error(f"Неизвестная ошибка: {err}")
+
         products_json = response.json()
         parent_category_name = products_json.get('name')
-        subcategories = products_json.get('subcategories', {})
-        db = SessionLocal()
-        for subcategory in subcategories:
+
+        for subcategory in products_json.get('subcategories', {}):
             category = CreateCategory(
                 name=subcategory.get("name"),
                 parent_id=Category.get_category_by_name(db, parent_category_name).id,
             )
             category = Category.get_or_create_category_by_name(db, category)
-            products = subcategory.get("products", [])
-            for _product in products:
+
+            for _product in subcategory.get("products", []):
                 product = CreateProduct(
                     name=_product['name'],
                     price=_product['prices']['regular'],
@@ -128,7 +143,7 @@ def categories_parser():
 celery.conf.beat_schedule = {
     'run-me-background-task': {
         'task': 'daemons.five.products_parser.product_parser',
-        'schedule': 60.0,                              # запуск задачи каждые 60 секунд
+        'schedule': 360.0,                              # запуск задачи каждые 60 секунд
         'args': ('Test text message',)
     }
 }

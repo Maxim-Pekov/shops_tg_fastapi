@@ -845,6 +845,18 @@ text-unidecode = ">=1.3"
 unidecode = ["Unidecode (>=1.1.1)"]
 
 [[package]]
+name = "pytz"
+version = "2025.2"
+description = "World timezone definitions, modern and historical"
+optional = false
+python-versions = "*"
+groups = ["main"]
+files = [
+    {file = "pytz-2025.2-py2.py3-none-any.whl", hash = "sha256:5ddf76296dd8c44c26eb8f4b6f35488f3ccbf6fbbd7adee0b7262d43f0ec2f00"},
+    {file = "pytz-2025.2.tar.gz", hash = "sha256:360b9e3dbb49a209c21ad61809c7fb453643e048b38924c765813546746e81c3"},
+]
+
+[[package]]
 name = "redis"
 version = "5.2.1"
 description = "Python client for Redis database and key-value store"
@@ -1127,4 +1139,4 @@ files = [
 [metadata]
 lock-version = "2.1"
 python-versions = ">=3.10"
-content-hash = "d35dd1c02e1e6883b0fdfc2f42f078115b2d07d0cbc37943b6dc9ae5554b2686"
+content-hash = "847f0e52f494ae8bbe8b91cbc05e4714d710fc8f3e1c4b506665a36cad81a2dd"
