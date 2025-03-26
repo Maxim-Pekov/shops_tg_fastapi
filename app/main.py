@@ -6,13 +6,15 @@ from fastapi import FastAPI
 
 from app.backend.db import Base, engine
 # from app.models import store
+from app.models import Product
 from celery_app import celery
 from routers import category, products, auth, store
+from app.daemons.five.products_parser import product_parser, categories_parser
 
 fastapi_app = FastAPI()
 
 
-@celery.task                               # просто оборачиваем функцию в декоратор
+@celery.task
 def call_background_task():
     time.sleep(10)
     print(f"Background Task called!")
@@ -21,7 +23,21 @@ def call_background_task():
 @fastapi_app.get("/")
 async def welcome() -> dict:
     # call_background_task.delay()
+    # product_parser("fff")
+    # categories_parser()
+    # Product.get_all_product_by_name("mолоко")
     return {"message": "My e-commerce app"}
+
+
+@fastapi_app.on_event("startup")
+async def startup_event():
+    import subprocess
+    worker = subprocess.Popen(
+        ["celery", "-A", "app.celery_app", "worker", "--loglevel=info"]
+    )
+    beat = subprocess.Popen(
+        ["celery", "-A", "app.celery_app", "beat", "--loglevel=info"]
+    )
 
 
 fastapi_app.include_router(category.router)
@@ -31,7 +47,7 @@ fastapi_app.include_router(store.router)
 
 
 if __name__ == "__main__":
-    # read_root()
+
     Base.metadata.create_all(engine)
 
     uvicorn.run("main:fastapi_app", port=8000, host="0.0.0.0", reload=True)

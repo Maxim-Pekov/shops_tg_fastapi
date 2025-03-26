@@ -11,7 +11,6 @@ from app.models import *
 router = APIRouter(prefix='/products', tags=['products'])
 
 
-
 @router.get('/')
 def all_products(db: Annotated[AsyncSession, Depends(get_db)]):
     products = Product.get_all_products(db)
@@ -33,8 +32,13 @@ def create_or_update_product(db: Annotated[AsyncSession, Depends(get_db)], creat
 
 
 @router.get('/{category_slug}')
-async def product_by_category(db: Annotated[AsyncSession, Depends(get_db)], category_slug: str):
+def product_by_category(db: Annotated[AsyncSession, Depends(get_db)], category_slug: str):
     return Product.get_products_by_category(db, category_slug)
+
+
+@router.get('/search_by_name/{name}')
+def products_by_partial_name(db: Annotated[AsyncSession, Depends(get_db)], name: str):
+    return Product.get_all_product_by_name(name)
 
 
 @router.get('/detail/{product_slug}')

@@ -22,6 +22,10 @@ class Category(Base):
         return db.query(Category).all()
 
     @staticmethod
+    def get_category_by_name(db: Session, name: str):
+        return db.query(Category).filter_by(name=name).first()
+
+    @staticmethod
     def create_categories(db: Session, create_category: CreateCategory):
         category = Category(name=create_category.name,
                             parent_id=create_category.parent_id,
@@ -29,3 +33,18 @@ class Category(Base):
         db.add(category)
         db.commit()
         return db.query(Category).all()
+
+    @staticmethod
+    def get_or_create_category_by_name(db: Session, create_category: CreateCategory):
+        category = db.query(Category).filter_by(name=create_category.name).first()
+        if not category:
+            category = Category(
+                name=create_category.name,
+                parent_id=create_category.parent_id,
+                slug=slugify(create_category.name)
+            )
+            db.add(category)
+            db.commit()
+        return category
+
+
