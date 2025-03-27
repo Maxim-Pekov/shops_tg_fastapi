@@ -1,16 +1,18 @@
 import asyncio
 import logging
+import os
+
+from dotenv import load_dotenv
 from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 import requests
 from aiogram import Bot, types
 from aiogram.utils import executor
 from aiogram.dispatcher import Dispatcher
 
-token = '8187841647:AAGsJS357kZrcfDVUp-1Ty67fpcSMmf_lN4'
-# bot = Bot(token=token)
 
-
-bot = Bot(token=token)
+load_dotenv()
+tg_token = os.getenv('TG_API_BOT')
+bot = Bot(token=tg_token)
 dp = Dispatcher(bot)
 
 
@@ -31,9 +33,7 @@ async def echo_message(msg: types.Message):
     )
     response.raise_for_status()
     products = [f"{product.get('name')}\n" for product in response.json()]
-    # await bot.send_message(msg.from_user.id, products)
     if products:
-        # Берем первый продукт из списка
         first_product = response.json()[0].get('name')
 
         # Создаем инлайн-кнопку
@@ -48,7 +48,6 @@ async def echo_message(msg: types.Message):
             reply_markup=keyboard
         )
     else:
-        # Если продуктов нет, отправляем сообщение об этом
         await bot.send_message(msg.from_user.id, "Продукты не найдены.")
 
 if __name__ == '__main__':
